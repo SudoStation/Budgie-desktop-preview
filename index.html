@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budgie Desktop Preview</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="desktop" class="desktop layout-traditional" data-layout="traditional" aria-label="Budgie desktop preview">
+    <div class="wallpaper" role="presentation"></div>
+
+    <!-- Layout chooser (preview UI — not part of Budgie itself) -->
+    <div class="layout-chooser" id="layout-chooser" role="group" aria-label="Desktop layout">
+      <div class="layout-chooser-label">Layout</div>
+      <div class="layout-chooser-options">
+        <button type="button" class="layout-opt active" data-layout="traditional" title="Single bottom panel">
+          <span class="layout-preview layout-preview-trad" aria-hidden="true">
+            <span class="lp-bar lp-bottom"></span>
+          </span>
+          <span class="layout-opt-name">Traditional</span>
+        </button>
+        <button type="button" class="layout-opt" data-layout="unity" title="Top panel + left dock">
+          <span class="layout-preview layout-preview-unity" aria-hidden="true">
+            <span class="lp-bar lp-top"></span>
+            <span class="lp-bar lp-left"></span>
+          </span>
+          <span class="layout-opt-name">Unity-like</span>
+        </button>
+        <button type="button" class="layout-opt" data-layout="cupertino" title="Top panel + bottom dock">
+          <span class="layout-preview layout-preview-cupertino" aria-hidden="true">
+            <span class="lp-bar lp-top"></span>
+            <span class="lp-bar lp-dock"></span>
+          </span>
+          <span class="layout-opt-name">macOS-like</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Desktop icons (budgie-desktop-view) -->
+    <div class="desktop-icons" id="desktop-icons" aria-label="Desktop icons">
+      <button type="button" class="desk-icon" data-place="home" title="Home">
+        <img src="assets/places/user-home.png" alt="" draggable="false" />
+        <span>Home</span>
+      </button>
+      <button type="button" class="desk-icon" data-place="trash" title="Trash">
+        <img src="assets/places/user-trash.png" alt="" draggable="false" />
+        <span>Trash</span>
+      </button>
+    </div>
+
+    <!-- Budgie Menu (popover) -->
+    <div class="budgie-menu" id="budgie-menu" role="dialog" aria-label="Budgie Menu" hidden>
+      <div class="budgie-menu-panel">
+        <header class="budgie-menu-header">
+          <div class="menu-search-wrap">
+            <img class="menu-search-icon sym" src="assets/actions/edit-find-symbolic.svg" alt="" draggable="false" />
+            <input
+              type="search"
+              id="menu-search"
+              class="menu-search"
+              placeholder="Type to search…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Search applications"
+            />
+          </div>
+        </header>
+
+        <div class="budgie-menu-body">
+          <aside class="menu-categories" id="menu-categories" role="list" aria-label="Categories">
+            <!-- filled by JS -->
+          </aside>
+          <div class="menu-apps-scroll">
+            <div class="menu-apps" id="menu-apps" role="list" aria-label="Applications">
+              <!-- filled by JS -->
+            </div>
+            <p class="menu-empty" id="menu-empty" hidden>Sorry, no items found</p>
+          </div>
+        </div>
+
+        <footer class="budgie-menu-footer">
+          <button type="button" class="menu-user-btn" id="menu-user-btn" title="User">
+            <img class="user-avatar sym" src="assets/status/user-info-symbolic.svg" alt="" draggable="false" />
+            <span id="menu-username">leon</span>
+          </button>
+          <div class="menu-footer-actions">
+            <button type="button" class="menu-icon-btn" title="Budgie Desktop Settings" aria-label="Budgie Desktop Settings">
+              <img class="sym" src="assets/status/preferences-desktop-symbolic.svg" alt="" draggable="false" />
+            </button>
+            <button type="button" class="menu-icon-btn" title="System Settings" aria-label="System Settings">
+              <img class="sym" src="assets/status/preferences-system-symbolic.svg" alt="" draggable="false" />
+            </button>
+            <button type="button" class="menu-icon-btn" id="menu-power-btn" title="Power" aria-label="Power">
+              <img class="sym" src="assets/status/system-shutdown-symbolic.svg" alt="" draggable="false" />
+            </button>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Power dialog (from menu power button) -->
+    <div class="power-dialog" id="power-dialog" role="dialog" aria-label="Power" hidden>
+      <div class="power-dialog-card">
+        <button type="button" class="power-dialog-item" data-action="lock">
+          <img class="sym" src="assets/status/system-lock-screen-symbolic.svg" alt="" draggable="false" />
+          <span>Lock</span>
+        </button>
+        <button type="button" class="power-dialog-item" data-action="logout">
+          <img class="sym" src="assets/status/system-log-out-symbolic.svg" alt="" draggable="false" />
+          <span>Log Out</span>
+        </button>
+        <button type="button" class="power-dialog-item" data-action="suspend">
+          <img class="sym" src="assets/status/media-playback-pause-symbolic.svg" alt="" draggable="false" />
+          <span>Suspend</span>
+        </button>
+        <button type="button" class="power-dialog-item" data-action="reboot">
+          <img class="sym" src="assets/status/system-reboot-symbolic.svg" alt="" draggable="false" />
+          <span>Restart</span>
+        </button>
+        <button type="button" class="power-dialog-item danger" data-action="shutdown">
+          <img class="sym" src="assets/status/system-shutdown-symbolic.svg" alt="" draggable="false" />
+          <span>Shut Down</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status applets: sound popover -->
+    <div class="status-popover sound-popover" id="sound-popover" role="dialog" aria-label="Sound" hidden>
+      <div class="status-popover-row">
+        <img class="sym" src="assets/status/audio-volume-medium-symbolic.svg" alt="" draggable="false" />
+        <input type="range" class="status-slider" id="volume-slider" min="0" max="100" value="62" aria-label="Volume" />
+        <span class="status-pct" id="volume-pct">62%</span>
+      </div>
+    </div>
+
+    <!-- Network popover -->
+    <div class="status-popover net-popover" id="net-popover" role="dialog" aria-label="Network" hidden>
+      <div class="net-status-row">
+        <img class="sym" src="assets/status/network-wired-symbolic.svg" alt="" draggable="false" />
+        <div>
+          <div class="net-name">Wired connection</div>
+          <div class="net-sub">Connected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Battery / power popover -->
+    <div class="status-popover batt-popover" id="batt-popover" role="dialog" aria-label="Power" hidden>
+      <div class="batt-row">
+        <img class="sym" src="assets/status/battery-full-charged-symbolic.svg" alt="" draggable="false" />
+        <div>
+          <div class="net-name">Battery</div>
+          <div class="net-sub">100% — Fully charged</div>
+        </div>
+      </div>
+      <div class="status-sep"></div>
+      <div class="power-profiles">
+        <button type="button" class="profile-btn">Power Saver</button>
+        <button type="button" class="profile-btn active">Balanced</button>
+        <button type="button" class="profile-btn">Performance</button>
+      </div>
+    </div>
+
+    <!-- Raven sidebar -->
+    <aside class="raven" id="raven" aria-label="Raven" hidden>
+      <header class="raven-header">
+        <div class="raven-switcher" role="tablist">
+          <button type="button" class="raven-tab active" role="tab" data-tab="widgets" aria-selected="true">Widgets</button>
+          <button type="button" class="raven-tab" role="tab" data-tab="notifications" aria-selected="false">Notifications</button>
+        </div>
+      </header>
+
+      <div class="raven-stack">
+        <div class="raven-page" id="raven-widgets" data-page="widgets">
+          <!-- Calendar widget -->
+          <section class="raven-widget">
+            <div class="raven-widget-header">
+              <span>Calendar</span>
+            </div>
+            <div class="raven-widget-body raven-calendar">
+              <div class="rc-month-nav">
+                <button type="button" class="rc-nav" id="rc-prev" aria-label="Previous month">‹</button>
+                <span class="rc-month-label" id="rc-month-label">July 2026</span>
+                <button type="button" class="rc-nav" id="rc-next" aria-label="Next month">›</button>
+              </div>
+              <div class="rc-weekdays" aria-hidden="true">
+                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+              </div>
+              <div class="rc-grid" id="rc-grid"></div>
+            </div>
+          </section>
+
+          <!-- Sound Output -->
+          <section class="raven-widget">
+            <div class="raven-widget-header">
+              <span>Sound Output</span>
+            </div>
+            <div class="raven-widget-body">
+              <div class="raven-sound-row">
+                <img class="sym" src="assets/status/audio-volume-high-symbolic.svg" alt="" draggable="false" />
+                <input type="range" class="status-slider" id="raven-volume" min="0" max="100" value="62" aria-label="Output volume" />
+                <span class="status-pct" id="raven-volume-pct">62%</span>
+              </div>
+              <div class="raven-device-name">Speakers — Built-in Audio</div>
+            </div>
+          </section>
+
+          <!-- Sound Input -->
+          <section class="raven-widget">
+            <div class="raven-widget-header">
+              <span>Sound Input</span>
+            </div>
+            <div class="raven-widget-body">
+              <div class="raven-sound-row">
+                <img class="sym" src="assets/status/audio-input-microphone-symbolic.svg" alt="" draggable="false" />
+                <input type="range" class="status-slider" id="raven-mic" min="0" max="100" value="80" aria-label="Input volume" />
+                <span class="status-pct" id="raven-mic-pct">80%</span>
+              </div>
+              <div class="raven-device-name">Microphone — Built-in Audio</div>
+            </div>
+          </section>
+
+          <!-- Media Controls -->
+          <section class="raven-widget">
+            <div class="raven-widget-header">
+              <span>Media Controls</span>
+            </div>
+            <div class="raven-widget-body raven-media">
+              <div class="media-art" aria-hidden="true"></div>
+              <div class="media-meta">
+                <div class="media-title">Nothing playing</div>
+                <div class="media-artist">No media player active</div>
+              </div>
+              <div class="media-controls">
+                <button type="button" class="media-btn" aria-label="Previous">
+                  <img class="sym" src="assets/status/media-skip-backward-symbolic.svg" alt="" draggable="false" />
+                </button>
+                <button type="button" class="media-btn media-play" aria-label="Play">
+                  <img class="sym" src="assets/status/media-playback-start-symbolic.svg" alt="" draggable="false" />
+                </button>
+                <button type="button" class="media-btn" aria-label="Next">
+                  <img class="sym" src="assets/status/media-skip-forward-symbolic.svg" alt="" draggable="false" />
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="raven-page" id="raven-notifications" data-page="notifications" hidden>
+          <div class="raven-notif-empty">
+            <img class="sym" src="assets/status/notification-alert-symbolic.svg" alt="" draggable="false" />
+            <p>No new notifications</p>
+            <button type="button" class="raven-clear-btn" disabled>Clear all</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Nemo (Files) — Ubuntu Budgie default file manager -->
+    <div class="nemo-window" id="nemo-window" role="dialog" aria-label="Home" hidden>
+      <header class="nemo-titlebar">
+        <div class="nemo-titlebar-left">
+          <img class="nemo-title-icon" src="assets/places/user-home.png" alt="" draggable="false" id="nemo-title-icon" />
+          <span class="nemo-title" id="nemo-title">Home</span>
+        </div>
+        <div class="nemo-window-controls">
+          <button type="button" class="nemo-wc nemo-min" title="Minimize" aria-label="Minimize"></button>
+          <button type="button" class="nemo-wc nemo-max" title="Maximize" aria-label="Maximize"></button>
+          <button type="button" class="nemo-wc nemo-close" id="nemo-close" title="Close" aria-label="Close"></button>
+        </div>
+      </header>
+
+      <div class="nemo-menubar" aria-label="Menu bar">
+        <button type="button" class="nemo-menu-btn">File</button>
+        <button type="button" class="nemo-menu-btn">Edit</button>
+        <button type="button" class="nemo-menu-btn">View</button>
+        <button type="button" class="nemo-menu-btn">Go</button>
+        <button type="button" class="nemo-menu-btn">Bookmarks</button>
+        <button type="button" class="nemo-menu-btn">Help</button>
+      </div>
+
+      <div class="nemo-toolbar">
+        <div class="nemo-toolbar-group">
+          <button type="button" class="nemo-tb-btn" id="nemo-back" title="Back" aria-label="Back" disabled>
+            <img class="sym" src="assets/actions/go-previous-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="nemo-tb-btn" id="nemo-forward" title="Forward" aria-label="Forward" disabled>
+            <img class="sym" src="assets/actions/go-next-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="nemo-tb-btn" id="nemo-up" title="Up" aria-label="Parent folder" disabled>
+            <img class="sym" src="assets/actions/go-up-symbolic.svg" alt="" draggable="false" />
+          </button>
+        </div>
+
+        <div class="nemo-pathbar" id="nemo-pathbar" title="Current location">
+          <button type="button" class="nemo-crumb" data-path="home">
+            <img src="assets/places/user-home.png" alt="" draggable="false" />
+            <span id="nemo-path-label">Home</span>
+          </button>
+        </div>
+
+        <div class="nemo-toolbar-group">
+          <button type="button" class="nemo-tb-btn" id="nemo-search-btn" title="Search" aria-label="Search" aria-pressed="false">
+            <img class="sym" src="assets/actions/edit-find-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="nemo-tb-btn active" id="nemo-view-icons" title="Icon View" aria-label="Icon View" aria-pressed="true">
+            <img class="sym" src="assets/actions/view-grid-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="nemo-tb-btn" id="nemo-view-list" title="List View" aria-label="List View" aria-pressed="false">
+            <img class="sym" src="assets/actions/view-list-symbolic.svg" alt="" draggable="false" />
+          </button>
+        </div>
+      </div>
+
+      <div class="nemo-body">
+        <aside class="nemo-sidebar" id="nemo-sidebar" aria-label="Places">
+          <!-- filled by JS -->
+        </aside>
+        <div class="nemo-main">
+          <div class="nemo-search-bar" id="nemo-search-bar" hidden>
+            <img class="sym" src="assets/actions/edit-find-symbolic.svg" alt="" draggable="false" />
+            <input type="search" id="nemo-search-input" class="nemo-search-input" placeholder="Search" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="nemo-content view-icons" id="nemo-content" role="list">
+            <div class="nemo-list-header" aria-hidden="true">
+              <span></span>
+              <span>Name</span>
+              <span>Size</span>
+              <span>Modified</span>
+            </div>
+          </div>
+          <footer class="nemo-statusbar">
+            <span id="nemo-status">8 items</span>
+            <span class="nemo-status-free">Free space: 128.4 GB</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top panel (Unity-like / macOS-like) -->
+    <header class="panel panel-top" id="panel-top" role="toolbar" aria-label="Top panel" hidden>
+      <div class="panel-start" id="panel-top-start"></div>
+      <div class="panel-center" id="panel-top-center"></div>
+      <div class="panel-end" id="panel-top-end"></div>
+    </header>
+
+    <!-- Left dock (Unity-like) -->
+    <aside class="panel panel-left" id="panel-left" role="toolbar" aria-label="Launcher" hidden>
+      <div class="panel-left-inner" id="panel-left-inner"></div>
+    </aside>
+
+    <!-- Bottom panel / dock (Traditional bottom bar; macOS-like dock) -->
+    <footer class="panel panel-bottom" id="panel-bottom" role="toolbar" aria-label="Panel">
+      <div class="panel-start" id="panel-bottom-start">
+        <!-- Budgie Menu applet -->
+        <button type="button" class="panel-btn panel-menu-btn" id="menu-btn" aria-expanded="false" aria-controls="budgie-menu" title="Menu">
+          <img class="sym menu-grid-icon" src="assets/actions/view-grid-symbolic.svg" alt="" draggable="false" />
+        </button>
+
+        <!-- Icon Task List -->
+        <div class="icon-tasklist" id="icon-tasklist" aria-label="Icon Task List">
+          <button type="button" class="task-btn" data-app="files" id="task-files" title="Files">
+            <img src="assets/apps/nemo.png" alt="" draggable="false" />
+            <span class="task-indicator" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="task-btn" data-app="firefox" title="Firefox">
+            <img src="assets/apps/firefox.svg" alt="" draggable="false" />
+            <span class="task-indicator" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="task-btn" data-app="terminal" title="Terminal">
+            <img src="assets/apps/utilities-terminal.png" alt="" draggable="false" />
+            <span class="task-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-center" id="panel-bottom-center"></div>
+
+      <div class="panel-end" id="panel-bottom-end">
+        <!-- System tray placeholder -->
+        <div class="system-tray" id="system-tray" aria-label="System Tray" title="System tray">
+          <span class="tray-dot" aria-hidden="true"></span>
+        </div>
+
+        <!-- Notifications applet -->
+        <button type="button" class="panel-btn" id="notif-btn" title="Notifications" aria-label="Notifications">
+          <img class="sym" src="assets/status/notification-alert-symbolic.svg" alt="" draggable="false" />
+        </button>
+
+        <!-- Status Indicator: Bluetooth, Network, Sound, Battery -->
+        <div class="status-applet" id="status-applet">
+          <button type="button" class="panel-btn status-item" id="bt-btn" title="Bluetooth" aria-label="Bluetooth">
+            <img class="sym" src="assets/status/bluetooth-active-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="panel-btn status-item" id="net-btn" title="Network" aria-expanded="false" aria-controls="net-popover">
+            <img class="sym" src="assets/status/network-wired-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="panel-btn status-item" id="sound-btn" title="Sound" aria-expanded="false" aria-controls="sound-popover">
+            <img class="sym" src="assets/status/audio-volume-medium-symbolic.svg" alt="" draggable="false" />
+          </button>
+          <button type="button" class="panel-btn status-item" id="batt-btn" title="Battery" aria-expanded="false" aria-controls="batt-popover">
+            <img class="sym" src="assets/status/battery-full-charged-symbolic.svg" alt="" draggable="false" />
+          </button>
+        </div>
+
+        <!-- Clock -->
+        <button type="button" class="panel-btn panel-clock" id="clock-btn" title="Clock">
+          <span id="clock-text">Sat 12:00</span>
+        </button>
+
+        <!-- Raven Trigger -->
+        <button type="button" class="panel-btn raven-trigger" id="raven-btn" title="Raven" aria-expanded="false" aria-controls="raven">
+          <img class="sym" id="raven-trigger-icon" src="assets/status/pane-show-symbolic.svg" alt="" draggable="false" />
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
